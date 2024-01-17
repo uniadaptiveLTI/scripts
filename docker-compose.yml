@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: mysql:latest
+    container_name: ua-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: uniadaptive_back
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test_pass
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - 3306:3306
+    networks:
+      - uniadaptive-network
+    volumes:
+      - ./db:/var/lib/mysql
+
+  back:
+    build:
+      context: uniadaptiveLTI-Back
+      dockerfile: Dockerfile
+      args:
+        CLIENT_ID: xxx
+        DEPLOYMENT_ID: 0
+    image: ua-back
+    container_name: ua-back
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "9000:9000"
+    working_dir: /var/www/html
+    volumes:
+      - /var/www/html/vendor
+      - /var/www/html/storage
+      - /var/www/html/storage/keys
+      - ./uniadaptiveLTI-Back:/var/www/html:rw
+      - ./uniadaptiveLTI-Back/.env:/var/www/html/.env
+      - ./uniadaptiveLTI-Back/docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+    networks:
+      - uniadaptive-network
+
+  front:
+    build:
+      context: uniadaptiveLTI-Front
+      dockerfile: Dockerfile
+      args:
+        - NEXT_MODE=production
+    image: ua-front
+    container_name: ua-front
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_MODE: production
+    networks:
+      - uniadaptive-network
+    volumes:
+      - ./uniadaptiveLTI-Front/.env:/app/.env
+
+networks:
+  uniadaptive-network:
+    driver: bridge
