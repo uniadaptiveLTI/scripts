@@ -15,7 +15,7 @@ get_os() {
 
 # Función para validar la URL
 validar_url() {
-    if [[ $1 =~ "^http(s)?://.+" ]]; then
+    if echo "$1" | grep -E '^http(s)?://.+$' > /dev/null; then
         return 0
     else
         return 1
